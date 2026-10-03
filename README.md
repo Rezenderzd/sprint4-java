@@ -21,20 +21,23 @@ relatório de prioridades — persistido no banco de dados Oracle.
 ## Tecnologias utilizadas
 
 - Java 17+ (uso de `record`, pattern matching de `instanceof`, text blocks)
+- Maven 3.9+ (build e gerenciamento de dependências)
 - JDBC (`java.sql.*`)
 - Banco de dados Oracle (testado com o Oracle da FIAP — `oracle.fiap.com.br`)
-- Driver `ojdbc17.jar` (incluído em `lib/`)
+- Driver `ojdbc17`, baixado pelo Maven como dependência do `pom.xml`
 
 ## Estrutura do projeto
 
 ```
-sprint3-java/
-├── lib/
-│   └── ojdbc17.jar              # driver JDBC do Oracle
-├── src/
-│   ├── br.com.fiap.db/
+motiva/
+├── pom.xml                      # build Maven e dependência do driver ojdbc17
+├── scripts/
+│   ├── criar-tabela.sql         # DDL de todas as tabelas
+│   └── dados.sql                # massa de dados de teste
+├── src/main/java/br/com/fiap/
+│   ├── db/
 │   │   └── ConexaoBanco.java    # abre a conexão com o Oracle
-│   ├── br.com.fiap.model/                   # entidades e regras de domínio
+│   ├── model/                   # entidades e regras de domínio
 │   │   ├── TrechoRodovia.java
 │   │   ├── TrechoComSensor.java
 │   │   ├── EquipeManutencao.java
@@ -44,37 +47,34 @@ sprint3-java/
 │   │   ├── EquipesRanking.java / TrechoRanking.java (records p/ relatório)
 │   │   ├── MonitoravelViaIoT.java (interface)
 │   │   └── ValidacoesTrechoRodovia.java
-│   ├── br.com.fiap.dao/                     # acesso a dados (CRUD via JDBC)
+│   ├── dao/                     # acesso a dados (CRUD via JDBC)
 │   │   ├── TrechoRodoviaDAO.java
 │   │   ├── EquipeManutencaoDAO.java
 │   │   ├── IntervencaoOperacionalDAO.java
 │   │   └── RelatorioPrioridadeDAO.java
-│   ├── br.com.fiap.service/
-│   │   └── Relatorio.java       # monta e persiste o relatório de prioridades
-│   ├── br.com.fiap.main/
-│   │   ├── Main.java            # ponto de entrada da aplicação
-│   │   ├── AtualizandoTrechos.java
+│   ├── service/
+│   │   ├── Relatorio.java       # monta e persiste o relatório de prioridades
 │   │   └── AvaliacaoTrechos.java
-│   └── br.com.fiap.scripts/
-│       ├── criar-tabela.sql     # DDL de todas as tabelas
-│       └── dados.sql            # massa de dados de teste
+│   └── main/
+│       └── Main.java            # ponto de entrada da aplicação
 └── README.md
 ```
 
 ## Pré-requisitos
 
 - JDK 17 ou superior instalado (`java -version` / `javac -version`)
+- Maven 3.9 ou superior instalado (`mvn -version`)
 - Acesso a um banco Oracle (host, porta, SID, usuário e senha)
-- Cliente SQL para rodar os br.com.fiap.scripts (Oracle SQL Developer, DBeaver, etc.)
+- Cliente SQL para rodar os scripts (Oracle SQL Developer, DBeaver, etc.)
 
 ## 1. Configurar o banco de dados
 
-Execute os br.com.fiap.scripts **nesta ordem**, usando seu cliente SQL preferido:
+Execute os scripts **nesta ordem**, usando seu cliente SQL preferido:
 
-1. `src/br.com.fiap.scripts/criar-tabela.sql` — cria as tabelas:
+1. `scripts/criar-tabela.sql` — cria as tabelas:
    `trechos`, `equipesManutencao`, `intervencoesOperacionais`,
    `relatoriosPrioridade`, `rankingEquipes` e `rankingTrechos`.
-2. `src/br.com.fiap.scripts/dados.sql` — insere os dados de teste iniciais
+2. `scripts/dados.sql` — insere os dados de teste iniciais
    (trechos de rodovia e equipes de manutenção).
 
 > **Dica:** no Oracle SQL Developer, você pode colar o conteúdo dos dois
@@ -86,7 +86,7 @@ Execute os br.com.fiap.scripts **nesta ordem**, usando seu cliente SQL preferido
 
 ## 2. Configurar a conexão (ConexaoBanco.java)
 
-Abra `src/br.com.fiap.db/ConexaoBanco.java` e ajuste as constantes com **suas** credenciais
+Abra `src/main/java/br/com/fiap/db/ConexaoBanco.java` e ajuste as constantes com **suas** credenciais
 de acesso ao Oracle:
 
 ```java
@@ -97,38 +97,27 @@ private static final String USER = "SEU_USUARIO";
 private static final String PASSWORD = "SUA_SENHA";
 ```
 
-> O projeto já vem com o `lib/ojdbc17.jar` no classpath — não é necessário
-> baixar o driver separadamente.
+> O driver `ojdbc17` é baixado automaticamente pelo Maven — não é necessário
+> baixar nem copiar nenhum `.jar` manualmente.
 
 ## 3. Compilar o projeto
 
-**Pelo terminal (Linux/Mac):**
+**Pelo terminal (Linux/Mac/Windows):**
 ```bash
-mkdir -p bin
-javac -cp "lib/ojdbc17.jar" -d bin $(find src -name "*.java")
-```
-
-**Pelo terminal (Windows / PowerShell):**
-```powershell
-mkdir bin
-javac -cp "lib/ojdbc17.jar" -d bin (Get-ChildItem -Recurse -Filter *.java -Path src).FullName
+mvn compile
 ```
 
 **Pela IDE (IntelliJ IDEA):**
-Abra a pasta do projeto normalmente — o módulo `untitled.iml` já referencia
-`ojdbc17.jar` como biblioteca do projeto. Basta rodar `Main.java`.
+Abra a pasta do projeto como projeto **Maven** (arquivo `pom.xml`). A IDE baixa
+o driver `ojdbc17` sozinha. Basta rodar `Main.java`.
 
 ## 4. Executar o projeto
 
-**Linux/Mac:**
 ```bash
-java -cp "bin:lib/ojdbc17.jar" br.com.fiap.main.Main
+mvn compile exec:java
 ```
 
-**Windows:**
-```powershell
-java -cp "bin;lib/ojdbc17.jar" br.com.fiap.main.Main
-```
+O `pom.xml` já aponta a classe principal (`Main`) no `exec-maven-plugin`.
 
 ## O que o `Main.java` demonstra
 
@@ -165,7 +154,7 @@ java -cp "bin;lib/ojdbc17.jar" br.com.fiap.main.Main
 
 | Problema | Solução |
 |---|---|
-| `Driver not found` | Confirme que `lib/ojdbc17.jar` está no classpath de compilação e execução |
+| `Driver not found` | Rode `mvn compile` para baixar o driver `ojdbc17` (dependência do `pom.xml`) |
 | `ORA-01017: invalid username/password` | Verifique as credenciais em `ConexaoBanco.java` |
 | `ORA-00942: table or view does not exist` | Execute `criar-tabela.sql` antes de rodar o `Main` |
 | `ORA-02292: integrity constraint violated` | Existem registros dependentes (FK); remova-os antes de excluir o pai |
