@@ -17,11 +17,11 @@ Java 17 · Spring Boot 4.1.x · Spring Web · Spring Data JPA (Hibernate) · Bea
       conferência perto do fim do script (`... WHERE trechoId IS NULL OR equipeId IS NULL`) **precisa voltar vazia** antes de
       criar as chaves estrangeiras; se listar linhas, corrija ou apague essas intervenções (o trecho ou a equipe delas não existe mais).
    2. `scripts/02-dados.sql` — massa de dados de teste.
-2. **Credenciais** (nunca no código; o `application.properties` lê `${DB_USER}` e `${DB_PASSWORD}` **sem valor padrão**, então sem as variáveis a aplicação não sobe):
+2. **Credenciais** (nunca no código; o `application.properties` lê `SEU_RM` e `SUA_SENHA` **sem valor padrão**, então sem as variáveis a aplicação não sobe):
    ```bash
    # Linux / Mac
-   export DB_USER=RM000000
-   export DB_PASSWORD=sua_senha
+   export SEU_RM=RM000000
+   export SUA_SENHA=sua_senha
    ```
    ```powershell
    # Windows PowerShell
@@ -70,6 +70,27 @@ curl -i -X DELETE http://localhost:8080/api/trechos/5
 
 # Derived query: trechos com pelo menos 30 cm
 curl "http://localhost:8080/api/trechos/vegetacao?minimo=30"
+```
+
+### Equipes — `/api/equipes`
+| Método | Rota | Ação | Sucesso / Erro |
+|---|---|---|---|
+| GET | `/api/equipes` | Listar todas | 200 |
+| GET | `/api/equipes/{id}` | Buscar por ID | 200 / 404 |
+| GET | `/api/equipes/rocada/{tipo}` | Derived query: `manual` ou `mecanizada` | 200 |
+| POST | `/api/equipes` | Criar (com `Location`) | 201 / 400 |
+| PUT | `/api/equipes/{id}` | Atualizar | 200 / 400 / 404 |
+| DELETE | `/api/equipes/{id}` | Remover (400 se a equipe já tem intervenções) | 204 / 400 / 404 |
+
+Exemplos cURL:
+
+```bash
+# Criar equipe (201)
+curl -X POST http://localhost:8080/api/equipes -H "Content-Type: application/json" \
+  -d '{"nomeEquipe":"Equipe Alfa","numeroFuncionarios":6,"tipoDeRocadaDeAtuacao":"mecanizada"}'
+
+# Derived query: equipes manuais
+curl http://localhost:8080/api/equipes/rocada/manual
 ```
 
 ## Integrantes
