@@ -17,11 +17,11 @@ Java 17 · Spring Boot 4.1.x · Spring Web · Spring Data JPA (Hibernate) · Bea
       conferência perto do fim do script (`... WHERE trechoId IS NULL OR equipeId IS NULL`) **precisa voltar vazia** antes de
       criar as chaves estrangeiras; se listar linhas, corrija ou apague essas intervenções (o trecho ou a equipe delas não existe mais).
    2. `scripts/02-dados.sql` — massa de dados de teste.
-2. **Credenciais** (nunca no código; o `application.properties` lê `SEU_RM` e `SUA_SENHA` **sem valor padrão**, então sem as variáveis a aplicação não sobe):
+2. **Credenciais** (nunca no código; o `application.properties` lê `${DB_USER}` e `${DB_PASSWORD}` **sem valor padrão**, então sem as variáveis a aplicação não sobe):
    ```bash
    # Linux / Mac
-   export SEU_RM=RM000000
-   export SUA_SENHA=sua_senha
+   export DB_USER=RM000000
+   export DB_PASSWORD=sua_senha
    ```
    ```powershell
    # Windows PowerShell
@@ -91,6 +91,30 @@ curl -X POST http://localhost:8080/api/equipes -H "Content-Type: application/jso
 
 # Derived query: equipes manuais
 curl http://localhost:8080/api/equipes/rocada/manual
+```
+
+### Intervenções — `/api/intervencoes`
+| Método | Rota | Ação | Sucesso / Erro |
+|---|---|---|---|
+| GET | `/api/intervencoes` | Listar histórico | 200 |
+| GET | `/api/intervencoes/{id}` | Buscar por ID | 200 / 404 |
+| GET | `/api/intervencoes/equipe/{nome}` | Por nome da equipe | 200 |
+| POST | `/api/intervencoes` | Criar (`trechoId` + `equipeId`), com `Location` | 201 / 400 / 404 |
+| POST | `/api/intervencoes/gerar` | Ação: motor da Sprint 3, gera para trechos ≥ 30 cm | 200 |
+| PUT | `/api/intervencoes/{id}` | Trocar trecho/equipe (ver regra abaixo) | 200 / 400 / 404 |
+| DELETE | `/api/intervencoes/{id}` | Remover | 204 / 404 |
+
+O `PUT` de intervenção mantém o estado coerente: se só a equipe muda, atualiza a equipe (conferindo a compatibilidade) e mantém data e vegetação; se o **trecho** muda, o novo trecho é cortado (volta a 5 cm), a altura anterior ao corte do trecho antigo é restaurada (somente se ele ainda estiver em 5 cm) e a `dataGeracao` é renovada.
+
+Exemplos cURL:
+
+```bash
+# Motor: gerar intervenções (200)
+curl -X POST http://localhost:8080/api/intervencoes/gerar
+
+# Intervenção com equipe incompatível (400): trecho úmido exige equipe mecanizada
+curl -i -X POST http://localhost:8080/api/intervencoes -H "Content-Type: application/json" \
+  -d '{"trechoId":1,"equipeId":1}'
 ```
 
 ## Integrantes
