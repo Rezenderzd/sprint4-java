@@ -30,6 +30,48 @@ Java 17 · Spring Boot 4.1.x · Spring Web · Spring Data JPA (Hibernate) · Bea
    ```
 3. **Subir a API:** `mvn spring-boot:run` (ou *Run* na classe `MotivaApplication` pela IDE) → http://localhost:8080
 
+## Endpoints
+
+### Trechos — `/api/trechos`
+| Método | Rota | Ação | Sucesso / Erro |
+|---|---|---|---|
+| GET | `/api/trechos` | Listar todos (com a prioridade calculada) | 200 |
+| GET | `/api/trechos/{id}` | Buscar por ID | 200 / 404 |
+| GET | `/api/trechos/vegetacao?minimo=30` | Derived query: vegetação ≥ mínimo | 200 |
+| GET | `/api/trechos/clima/{clima}` | Derived query: por clima (`umido`/`seco`) | 200 |
+| POST | `/api/trechos` | Criar (header `Location` aponta para o novo recurso) | 201 / 400 |
+| POST | `/api/trechos/simular-crescimento` | Ação: faz a grama crescer em todos os trechos | 200 |
+| PUT | `/api/trechos/{id}` | Atualizar | 200 / 400 / 404 |
+| DELETE | `/api/trechos/{id}` | Remover (400 se o trecho já tem intervenções) | 204 / 400 / 404 |
+
+Exemplos cURL:
+
+```bash
+# Listar trechos (200)
+curl http://localhost:8080/api/trechos
+
+# Criar trecho (201)
+curl -X POST http://localhost:8080/api/trechos -H "Content-Type: application/json" \
+  -d '{"nomeTrecho":"Rodo Norte","quilometroInicial":40,"quilometroFinal":55,"nivelVegetacaoEmCm":35.0,"tipoClima":"umido","comSensor":true}'
+
+# Buscar inexistente (404)
+curl -i http://localhost:8080/api/trechos/9999
+
+# Atualizar (200)
+curl -X PUT http://localhost:8080/api/trechos/1 -H "Content-Type: application/json" \
+  -d '{"nomeTrecho":"Br","quilometroInicial":10,"quilometroFinal":15,"nivelVegetacaoEmCm":82.5,"tipoClima":"umido","comSensor":false}'
+
+# Dados inválidos: km final menor que o inicial (400)
+curl -i -X POST http://localhost:8080/api/trechos -H "Content-Type: application/json" \
+  -d '{"nomeTrecho":"X","quilometroInicial":30,"quilometroFinal":10,"nivelVegetacaoEmCm":5,"tipoClima":"seco"}'
+
+# Deletar (204)
+curl -i -X DELETE http://localhost:8080/api/trechos/5
+
+# Derived query: trechos com pelo menos 30 cm
+curl "http://localhost:8080/api/trechos/vegetacao?minimo=30"
+```
+
 ## Integrantes
 | RM | Nome |
 |---|---|
