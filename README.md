@@ -117,6 +117,30 @@ curl -i -X POST http://localhost:8080/api/intervencoes -H "Content-Type: applica
   -d '{"trechoId":1,"equipeId":1}'
 ```
 
+### Relatórios — `/api/relatorios`
+| Método | Rota | Ação | Sucesso / Erro |
+|---|---|---|---|
+| POST | `/api/relatorios` | Gera o relatório com os trechos atuais e **persiste** no histórico (com `Location`) | 201 |
+| GET | `/api/relatorios` | Lista o histórico | 200 |
+| GET | `/api/relatorios/periodo?inicio=2026-09-01&fim=2026-09-30` | Consulta por período (datas `AAAA-MM-DD`) | 200 / 400 |
+| GET | `/api/relatorios/{id}` | Busca um relatório | 200 / 404 |
+
+Exemplos cURL:
+
+```bash
+# Gerar relatório (201), histórico (200) e consulta por período (200)
+curl -X POST http://localhost:8080/api/relatorios
+curl http://localhost:8080/api/relatorios
+curl "http://localhost:8080/api/relatorios/periodo?inicio=2026-09-01&fim=2026-12-31"
+```
+
+### Regras de negócio (todas no Service)
+- **Motor de prioridade** (`MotorPrioridadeService`): `URGENTE` ≥ 80 cm · `CRITICO` ≥ 50 cm · `ATENCAO` ≥ 25 cm · `NORMAL` < 25 cm.
+- **Motor de intervenções**: trechos com vegetação ≥ 30 cm (regra da Sprint 3). Clima **úmido** → `RocadaMecanizada` (equipe `mecanizada`); clima **seco** → `Pulverizacao` (equipe `manual`). Depois do serviço o trecho volta a 5 cm.
+- **Validações da Sprint 1**: nome obrigatório, clima `umido`/`seco`, `kmFinal >= kmInicial`, `nivelVegetacao >= 0`.
+- **PUT de intervenção:** se só a equipe muda, atualiza a equipe (conferindo a compatibilidade) e mantém data e vegetação. Se o **trecho** muda, o novo trecho é cortado (volta a 5 cm), a altura anterior ao corte do trecho antigo é restaurada (somente se ele ainda estiver em 5 cm, para não apagar crescimento posterior) e a `dataGeracao` é renovada. A altura anterior ao corte fica na coluna `nivelVegetacaoAntesCm`.
+- **Erros** sempre no mesmo formato JSON: `{"status":404,"erro":"Not Found","mensagem":"...","timestamp":"..."}`. Além de 400/404, o `GlobalExceptionHandler` converte `DataIntegrityViolationException` (o banco recusou por FK/UNIQUE) em **400** e qualquer erro inesperado em **500**, sem expor stack trace nem mensagens `ORA-` (checklist da Aula 13: 404, 400, 500).
+
 ## Integrantes
 | RM | Nome |
 |---|---|
