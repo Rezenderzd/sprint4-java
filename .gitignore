@@ -37,3 +37,5 @@ bin/
 ### Credenciais locais ###
 application-local.properties
 .env
+
+.idea
