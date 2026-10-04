@@ -29,6 +29,7 @@ Java 17 · Spring Boot 4.1.x · Spring Web · Spring Data JPA (Hibernate) · Bea
    $env:DB_PASSWORD="sua_senha"
    ```
 3. **Subir a API:** `mvn spring-boot:run` (ou *Run* na classe `MotivaApplication` pela IDE) → http://localhost:8080
+4. **Testes:** `mvn test` (não precisam de Oracle nem sobem o Spring).
 
 ## Endpoints
 
